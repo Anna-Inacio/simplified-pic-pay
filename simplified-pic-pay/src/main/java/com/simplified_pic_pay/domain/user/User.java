@@ -1,5 +1,6 @@
 package com.simplified_pic_pay.domain.user;
 
+import com.simplified_pic_pay.dtos.UserDTO;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -20,6 +21,19 @@ public class User {
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
     private UserType userType;
+
+    public User(UserDTO user) {
+        this.firstName = user.firstName();
+        this.lastName = user.lastName();
+        this.document = user.document();
+        this.email = user.email();
+        this.password = user.password();
+        this.balance = user.balance();
+        this.userType = user.userType();
+    }
+
+    public User() {
+    }
 
     public Long getId() {
         return id;

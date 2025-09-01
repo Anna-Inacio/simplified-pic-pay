@@ -3,7 +3,9 @@ package com.simplified_pic_pay.service.transaction;
 import com.simplified_pic_pay.domain.transaction.Transaction;
 import com.simplified_pic_pay.domain.user.User;
 import com.simplified_pic_pay.dtos.TransactionDTO;
+import com.simplified_pic_pay.exception.UserNotFound;
 import com.simplified_pic_pay.repository.TransactionRepository;
+import com.simplified_pic_pay.repository.UserRepository;
 import com.simplified_pic_pay.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,9 @@ public class TransactionService {
     private TransactionRepository transactionRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -26,8 +31,10 @@ public class TransactionService {
     private NotificationTransaction notificationTransaction;
 
     public void createTransaction(TransactionDTO transaction) {
-        var sender = userService.findUserById(transaction.senderId());
-        var receiver = userService.findUserById(transaction.receiverId());
+        var sender = userRepository.findUserById(transaction.senderId())
+                .orElseThrow(() -> new UserNotFound("Sender not found"));
+        var receiver = userRepository.findUserById(transaction.receiverId())
+                .orElseThrow(() -> new UserNotFound("Receiver not found"));
 
         userService.validateTransaction(sender, transaction.amount());
 
@@ -35,8 +42,8 @@ public class TransactionService {
 
         if (isAuthorized) {
             transactionRepository.save(processTransaction(transaction, sender, receiver));
-            userService.save(sender);
-            userService.save(receiver);
+            userRepository.save(sender);
+            userRepository.save(receiver);
             notificationTransaction.notifyTransaction(receiver, "You have received a new transaction");
         }
     }
