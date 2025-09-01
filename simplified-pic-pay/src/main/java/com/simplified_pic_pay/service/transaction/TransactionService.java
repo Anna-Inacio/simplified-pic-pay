@@ -3,7 +3,7 @@ package com.simplified_pic_pay.service.transaction;
 import com.simplified_pic_pay.domain.transaction.Transaction;
 import com.simplified_pic_pay.domain.user.User;
 import com.simplified_pic_pay.dtos.TransactionDTO;
-import com.simplified_pic_pay.exception.UserNotFound;
+import com.simplified_pic_pay.exception.UserNotFoundException;
 import com.simplified_pic_pay.repository.TransactionRepository;
 import com.simplified_pic_pay.repository.UserRepository;
 import com.simplified_pic_pay.service.user.UserService;
@@ -30,22 +30,27 @@ public class TransactionService {
     @Autowired
     private NotificationTransaction notificationTransaction;
 
-    public void createTransaction(TransactionDTO transaction) {
+    public Transaction createTransaction(TransactionDTO transaction) {
         var sender = userRepository.findUserById(transaction.senderId())
-                .orElseThrow(() -> new UserNotFound("Sender not found"));
+                .orElseThrow(() -> new UserNotFoundException("Sender not found"));
         var receiver = userRepository.findUserById(transaction.receiverId())
-                .orElseThrow(() -> new UserNotFound("Receiver not found"));
+                .orElseThrow(() -> new UserNotFoundException("Receiver not found"));
 
         userService.validateTransaction(sender, transaction.amount());
 
+        //TODO Criar feature toggle
         var isAuthorized = authorizationTransaction.authorizeTransaction(sender, transaction.amount());
 
+        Transaction savedTransaction = null;
         if (isAuthorized) {
-            transactionRepository.save(processTransaction(transaction, sender, receiver));
+            savedTransaction = transactionRepository.save(processTransaction(transaction, sender, receiver));
             userRepository.save(sender);
             userRepository.save(receiver);
-            notificationTransaction.notifyTransaction(receiver, "You have received a new transaction");
+            //TODO Criar feature toggle
+//            notificationTransaction.notifyTransaction(sender, "Transaction completed successfully");
+//            notificationTransaction.notifyTransaction(receiver, "You have received a new transaction");
         }
+        return savedTransaction;
     }
 
    public Transaction processTransaction(TransactionDTO transactionDTO, User sender, User receiver) {

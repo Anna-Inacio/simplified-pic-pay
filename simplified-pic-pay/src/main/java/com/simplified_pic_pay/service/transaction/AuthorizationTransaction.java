@@ -20,6 +20,7 @@ public class AuthorizationTransaction {
         ResponseEntity<String> authorizationResponse = restTemplate.getForEntity(url, String.class);
 
         if (authorizationResponse.getBody() == null || !authorizationResponse.getBody().contains("success")) {
+            //todo MELHORAR exception personalizada
             throw new AuthorizationException("Transaction unauthorized by external service");
         }
         return true;

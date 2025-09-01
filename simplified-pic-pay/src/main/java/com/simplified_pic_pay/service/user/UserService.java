@@ -26,6 +26,7 @@ public class UserService {
         var documentAlreadyExist = repository.findUserByDocument(user.document());
 
         if (documentAlreadyExist.isPresent()) {
+            //TODO criar exception personalizada
             throw new IllegalArgumentException("Document already exists");
         }
 

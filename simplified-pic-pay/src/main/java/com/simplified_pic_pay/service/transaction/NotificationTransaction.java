@@ -15,6 +15,7 @@ public class NotificationTransaction {
     private RestTemplate restTemplate;
 
     public boolean notifyTransaction(User user, String message) {
+        //TODO pode ser async
         var email = user.getEmail();
         NotificatioDTO notification = new NotificatioDTO(email, message);
 
