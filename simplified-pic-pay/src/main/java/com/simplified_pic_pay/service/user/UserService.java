@@ -42,7 +42,7 @@ public class UserService {
     }
 
     private static void validationBalance(User sender, BigDecimal amount) {
-        if (sender.getBalance().compareTo(amount) < 0) {
+        if (sender.getBalance().compareTo(amount) <= 0) {
             throw new InsufficientBalanceException("Insufficient balance");
         }
     }
