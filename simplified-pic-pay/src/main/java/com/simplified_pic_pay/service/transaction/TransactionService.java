@@ -10,6 +10,7 @@ import com.simplified_pic_pay.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
@@ -31,25 +32,44 @@ public class TransactionService {
     private NotificationTransaction notificationTransaction;
 
     public Transaction createTransaction(TransactionDTO transaction) {
-        var sender = userRepository.findUserById(transaction.senderId())
-                .orElseThrow(() -> new UserNotFoundException("Sender not found"));
-        var receiver = userRepository.findUserById(transaction.receiverId())
-                .orElseThrow(() -> new UserNotFoundException("Receiver not found"));
+        var sender = getUserOrThrow(transaction.senderId(), "Sender not found");
+        var receiver = getUserOrThrow(transaction.receiverId(), "Receiver not found");
 
-        userService.validateTransaction(sender, transaction.amount());
+        validateTransaction(sender, transaction.amount());
 
-        //TODO Criar feature toggle
-        var isAuthorized = authorizationTransaction.authorizeTransaction(sender, transaction.amount());
+        var isAuthorized = authorizeTransaction(sender, transaction.amount());
 
         Transaction savedTransaction = null;
         if (isAuthorized) {
-            savedTransaction = transactionRepository.save(processTransaction(transaction, sender, receiver));
-            userRepository.save(sender);
-            userRepository.save(receiver);
+            savedTransaction = saveTransactionAndUpdateUsers(transaction, sender, receiver);
             //TODO Criar feature toggle
-//            notificationTransaction.notifyTransaction(sender, "Transaction completed successfully");
-//            notificationTransaction.notifyTransaction(receiver, "You have received a new transaction");
+//            notifyUsers(sender, receiver);
         }
+        return savedTransaction;
+    }
+
+    private User getUserOrThrow(Long userId, String errorMessage) {
+        return userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(errorMessage));
+    }
+
+    private void validateTransaction(User sender, BigDecimal amount) {
+        userService.validateTransaction(sender, amount);
+    }
+
+    private boolean authorizeTransaction(User sender, BigDecimal amount) {
+        return authorizationTransaction.authorizeTransaction(sender, amount);
+    }
+
+    private void notifyUsers(User sender, User receiver) {
+        notificationTransaction.notifyTransaction(sender, "Transaction completed successfully");
+        notificationTransaction.notifyTransaction(receiver, "You have received a new transaction");
+    }
+
+    private Transaction saveTransactionAndUpdateUsers(TransactionDTO transaction, User sender, User receiver) {
+        Transaction savedTransaction = transactionRepository.save(processTransaction(transaction, sender, receiver));
+        userRepository.save(sender);
+        userRepository.save(receiver);
         return savedTransaction;
     }
 
