@@ -80,8 +80,12 @@ public class TransactionService {
         newTransaction.setReceiver(receiver);
         newTransaction.setTransactionDate(LocalDateTime.now());
 
+       updateUsers(transactionDTO, sender, receiver);
+       return newTransaction;
+    }
+
+    private static void updateUsers(TransactionDTO transactionDTO, User sender, User receiver) {
         sender.setBalance(sender.getBalance().subtract(transactionDTO.amount()));
         receiver.setBalance(receiver.getBalance().add(transactionDTO.amount()));
-        return newTransaction;
     }
 }
