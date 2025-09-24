@@ -6,6 +6,11 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="0" author="anna.inacio">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="transactions" schemaName="public"/>
+            </not>
+        </preConditions>
         <createTable tableName="transactions">
             <column name="id" type="BIGSERIAL" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
